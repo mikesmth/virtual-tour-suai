@@ -1,4 +1,4 @@
-// Все углы в конфиге задаются в ГРАДУСАХ в радианы конвертирует движок
+// Все углы в конфиге задаются в ГРАДУСАХ, в радианы конвертирует движок
 
 export interface LevelDef {
     size: number
@@ -28,6 +28,12 @@ export interface ViewDef {
     fov: number
 }
 
+// Поворот самой картинки панорамы (без fov)
+export interface Rotation {
+    yaw?: number
+    pitch?: number
+}
+
 export interface PickedCoords {
     yaw: number
     pitch: number
@@ -51,6 +57,7 @@ export interface SceneDef {
     description?: string
     source: PanoSource
     initialView?: Partial<ViewDef>
+    correction?: Rotation
     hotspots: HotspotDef[]
 }
 

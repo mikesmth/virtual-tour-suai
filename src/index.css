@@ -135,6 +135,21 @@ button {
     background: #0b0d0e;
 }
 
+.tour__stage {
+    position: absolute;
+    inset: 0;
+}
+
+.tour__loading {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(11, 13, 14, 0.45);
+    color: #fff;
+    pointer-events: none;
+}
+
 
 .hotspot {
     margin: -22px 0 0 -22px;

@@ -22,7 +22,7 @@ export default function App() {
                         key={s.id}
                         type='button'
                         className={s.id === sceneId ? 'pill pill--active' : 'pill'}
-                        onClick={() => setSceneId(s.id)}
+                        onClick={() => handleSceneChange(s.id)}
                     >
                         {s.title}
                     </button>

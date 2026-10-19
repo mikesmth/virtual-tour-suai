@@ -1,4 +1,4 @@
-import type { TourConfig, SceneDef, LevelDef } from './types'
+import type { TourConfig, SceneDef, LevelDef, LinkHotspot } from './types'
 
 const asset = (name: string) => `${import.meta.env.BASE_URL}panos/${name}`
 
@@ -12,170 +12,164 @@ export const DEFAULT_LEVELS: LevelDef[] = [
     { tileSize: 512, size: 2048 },
 ]
 
+const link = (target: string, yaw: number, pitch: number, label: string): LinkHotspot => ({
+    type: 'link',
+    id: `to-${target}`,
+    yaw,
+    pitch,
+    target,
+    label,
+})
+
+// Координаты необязательны: без них стрелка ставится по умолчанию
+const fwd = (target: string, yaw = 0, pitch = -10) => link(target, yaw, pitch, 'Вперёд')
+const back = (target: string, yaw = 180, pitch = -10) => link(target, yaw, pitch, 'Назад')
+
+const restart = (target: string, yaw: number, pitch: number) => link(target, yaw, pitch, 'Назад')
+
+type SceneExtra = Pick<SceneDef, 'description' | 'correction' | 'initialView'>
+
+const scene = (
+    id: string,
+    title: string,
+    hotspots: LinkHotspot[],
+    extra: SceneExtra = {},
+): SceneDef => ({
+    id,
+    title,
+    source: { kind: 'equirect', url: asset(`${id}.JPG`), width: PANO_WIDTH },
+    hotspots,
+    ...extra,
+})
+
+// Панорамы, снятые «набок»: только поворот картинки.
+// initialView у каждой такой сцены задаётся отдельно.
+const SIDEWAYS: Pick<SceneDef, 'correction'> = {
+    correction: { yaw: 90, pitch: 90 },
+}
+
 const scenes: SceneDef[] = [
-    {
-        id: 'R0011363',
-        title: 'П-1',
-        source: { kind: 'equirect', url: asset('R0011363.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011364', yaw: 0, pitch: -10, target: 'R0011364', label: 'Вперёд' },
-        ],
-    },
-    {
-        id: 'R0011364',
-        title: 'П-2',
-        source: { kind: 'equirect', url: asset('R0011364.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011365', yaw: 0, pitch: -10, target: 'R0011365', label: 'Вперёд' },
-            { type: 'link', id: 'to-R0011363', yaw: 180, pitch: -10, target: 'R0011363', label: 'Назад' },
-        ],
-    },
-    {
-        id: 'R0011365',
-        title: 'П-3',
-        source: { kind: 'equirect', url: asset('R0011365.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011366', yaw: 0, pitch: -10, target: 'R0011366', label: 'Вперёд' },
-            { type: 'link', id: 'to-R0011364', yaw: 180, pitch: -10, target: 'R0011364', label: 'Назад' },
-        ],
-    },
-    {
-        id: 'R0011366',
-        title: 'П-4',
-        source: { kind: 'equirect', url: asset('R0011366.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011367', yaw: 0, pitch: -10, target: 'R0011367', label: 'Вперёд' },
-            { type: 'link', id: 'to-R0011365', yaw: 180, pitch: -10, target: 'R0011365', label: 'Назад' },
-        ],
-    },
-    {
-        id: 'R0011367',
-        title: 'П-5',
-        source: { kind: 'equirect', url: asset('R0011367.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011368', yaw: 0, pitch: -10, target: 'R0011368', label: 'Вперёд' },
-            { type: 'link', id: 'to-R0011366', yaw: 180, pitch: -10, target: 'R0011366', label: 'Назад' },
-        ],
-    },
-    {
-        id: 'R0011368',
-        title: 'П-6',
-        source: { kind: 'equirect', url: asset('R0011368.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011369', yaw: 0, pitch: -10, target: 'R0011369', label: 'Вперёд' },
-            { type: 'link', id: 'to-R0011367', yaw: 180, pitch: -10, target: 'R0011367', label: 'Назад' },
-        ],
-    },
-    {
-        id: 'R0011369',
-        title: 'П-7',
-        source: { kind: 'equirect', url: asset('R0011369.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011370', yaw: 0, pitch: -10, target: 'R0011370', label: 'Вперёд' },
-            { type: 'link', id: 'to-R0011368', yaw: 180, pitch: -10, target: 'R0011368', label: 'Назад' },
-        ],
-    },
-    {
-        id: 'R0011370',
-        title: 'П-8',
-        source: { kind: 'equirect', url: asset('R0011370.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011371', yaw: 0, pitch: -10, target: 'R0011371', label: 'Вперёд' },
-            { type: 'link', id: 'to-R0011369', yaw: 180, pitch: -10, target: 'R0011369', label: 'Назад' },
-        ],
-    },
-    {
-        id: 'R0011371',
-        title: 'П-9',
-        source: { kind: 'equirect', url: asset('R0011371.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011372', yaw: 0, pitch: -10, target: 'R0011372', label: 'Вперёд' },
-            { type: 'link', id: 'to-R0011370', yaw: 180, pitch: -10, target: 'R0011370', label: 'Назад' },
-        ],
-    },
-    {
-        id: 'R0011372',
-        title: 'П-10',
-        source: { kind: 'equirect', url: asset('R0011372.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011373', yaw: 0, pitch: -10, target: 'R0011373', label: 'Вперёд' },
-            { type: 'link', id: 'to-R0011371', yaw: 180, pitch: -10, target: 'R0011371', label: 'Назад' },
-        ],
-    },
-    {
-        id: 'R0011373',
-        title: 'П-11',
-        source: { kind: 'equirect', url: asset('R0011373.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011374', yaw: 0, pitch: -10, target: 'R0011374', label: 'Вперёд' },
-            { type: 'link', id: 'to-R0011372', yaw: 180, pitch: -10, target: 'R0011372', label: 'Назад' },
-        ],
-    },
-    {
-        id: 'R0011374',
-        title: 'П-12',
-        source: { kind: 'equirect', url: asset('R0011374.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011375', yaw: 0, pitch: -10, target: 'R0011375', label: 'Вперёд' },
-            { type: 'link', id: 'to-R0011373', yaw: 180, pitch: -10, target: 'R0011373', label: 'Назад' },
-        ],
-    },
-    {
-        id: 'R0011375',
-        title: 'П-13',
-        source: { kind: 'equirect', url: asset('R0011375.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011376', yaw: 0, pitch: -10, target: 'R0011376', label: 'Вперёд' },
-            { type: 'link', id: 'to-R0011374', yaw: 180, pitch: -10, target: 'R0011374', label: 'Назад' },
-        ],
-    },
-    {
-        id: 'R0011376',
-        title: 'П-14',
-        source: { kind: 'equirect', url: asset('R0011376.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011377', yaw: 0, pitch: -10, target: 'R0011377', label: 'Вперёд' },
-            { type: 'link', id: 'to-R0011375', yaw: 180, pitch: -10, target: 'R0011375', label: 'Назад' },
-        ],
-    },
-    {
-        id: 'R0011377',
-        title: 'П-15',
-        source: { kind: 'equirect', url: asset('R0011377.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011378', yaw: 0, pitch: -10, target: 'R0011378', label: 'Вперёд' },
-            { type: 'link', id: 'to-R0011376', yaw: 180, pitch: -10, target: 'R0011376', label: 'Назад' },
-        ],
-    },
-    {
-        id: 'R0011378',
-        title: 'П-16',
-        source: { kind: 'equirect', url: asset('R0011378.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011379', yaw: 0, pitch: -10, target: 'R0011379', label: 'Вперёд' },
-            { type: 'link', id: 'to-R0011377', yaw: 180, pitch: -10, target: 'R0011377', label: 'Назад' },
-        ],
-    },
-    {
-        id: 'R0011379',
-        title: 'П-17',
-        source: { kind: 'equirect', url: asset('R0011379.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011380', yaw: 0, pitch: -10, target: 'R0011380', label: 'Вперёд' },
-            { type: 'link', id: 'to-R0011378', yaw: 180, pitch: -10, target: 'R0011378', label: 'Назад' },
-        ],
-    },
-    {
-        id: 'R0011380',
-        title: 'П-18',
-        source: { kind: 'equirect', url: asset('R0011380.JPG'), width: PANO_WIDTH },
-        hotspots: [
-            { type: 'link', id: 'to-R0011379', yaw: 180, pitch: -10, target: 'R0011379', label: 'Назад' },
-        ],
-    },
+    scene('R0011363', 'П-1', [
+        fwd('R0011364', -24.7, 70.3),
+    ], {
+        correction: { yaw: 100, pitch: 90 },
+        initialView: { yaw: -80.9, pitch: 21, fov: 90 },
+    }),
+
+    scene('R0011364', 'П-2', [
+        fwd('R0011365', 32.3, -4.9),
+        back('R0011363', -64, -79.1),
+    ], {
+        initialView: { yaw: 5.2, pitch: 10.8 },
+    }),
+
+    scene('R0011365', 'П-3', [
+        fwd('R0011366', 0, -10),
+        link('R0011364', -153.8, -7.9, 'Назад'),
+    ], {
+        initialView: { yaw: 16.7, pitch: 4.5 },
+    }),
+
+    scene('R0011366', 'П-4', [
+        link('R0011367', 13.9, 1, 'Вперёд'),
+        link('R0011365', 161.4, -9.3, 'Назад'),
+    ]),
+
+    scene('R0011367', 'П-5', [
+        fwd('R0011369', -120.5, -4.2),
+        link('R0011368', 166.2, -0.4, 'Подальше'),
+        back('R0011366', -20.7, -0.4),
+    ], {
+        initialView: { yaw: -0.8, pitch: 3.7 },
+    }),
+
+    scene('R0011368', 'П-6', [
+        link('R0011367', -53.4, 18.9, 'Назад'),
+    ], {
+        initialView: { yaw: -164.4, pitch: 17.8 },
+    }),
+
+    scene('R0011369', 'П-7', [
+        fwd('R0011370', 98.6, 0.1),
+        back('R0011368', 0, -10),
+    ], {
+        initialView: { yaw: -175.2, pitch: 2 },
+    }),
+
+    scene('R0011370', 'П-8', [
+        fwd('R0011372', 93.1, 8.5),
+        link('R0011371', -25.4, -17.9, 'Подальше'),
+        back('R0011369', 15.9, 5.6),
+    ], {
+        initialView: { yaw: -31.9, pitch: -8.8 },
+    }),
+
+    scene('R0011371', 'П-9', [
+        back('R0011370', -23.4, 26.1),
+    ], {
+        initialView: { yaw: 170.3, pitch: -20.5 },
+    }),
+
+    scene('R0011372', 'П-10', [
+        fwd('R0011373', 180, -10),
+        back('R0011371', 30.1, 29.6),
+    ], {
+        initialView: { yaw: -176.6, pitch: -2.1 },
+    }),
+
+    scene('R0011373', 'П-11', [
+        fwd('R0011374', 78.6, 74.6),
+        back('R0011372', -60.4, -11.9),
+    ], {
+        ...SIDEWAYS,
+        initialView: { yaw: -90, pitch: -0.2, fov: 90 },
+    }),
+
+    scene('R0011374', 'П-12', [
+        fwd('R0011376', 128.6, -4.1),
+        back('R0011373', 5.9, -51.8),
+    ], {
+        initialView: { yaw: 1.5, pitch: 7.8 },
+    }),
+
+    scene('R0011376', 'П-13', [
+        fwd('R0011377', 173.7, -25.90),
+        back('R0011374', 0, -10),
+    ], {
+        initialView: { yaw: 173.7, pitch: 3.3 },
+    }),
+
+    scene('R0011377', 'П-14', [
+        fwd('R0011378', 8.9, -3.8),
+        back('R0011376', 116.6, 9.3),
+    ], {
+        initialView: { yaw: 10.5, pitch: 6 },
+    }),
+
+    scene('R0011378', 'П-15', [
+        fwd('R0011379', 0, -10),
+        back('R0011377', -160.8, -5.3),
+    ], {
+        initialView: { yaw: 5.7, pitch: 4.4 },
+    }),
+
+    scene('R0011379', 'П-16', [
+        fwd('R0011380', -0.9, 5),
+        back('R0011378', 178.7, 4.5),
+    ], {
+        ...SIDEWAYS,
+        initialView: { yaw: 90.9, pitch: 61.7, fov: 90 },
+    }),
+
+    scene('R0011380', 'П-17', [
+        restart('R0011380', -114.5, -2.3),
+        back('R0011379', 103.5, -10.2),
+    ], {
+        initialView: { yaw: -70.1, pitch: 1.3 },
+    }),
 ]
 
 export const tour: TourConfig = {
-    startSceneId: 'R0011373',
+    startSceneId: 'R0011363',
     scenes,
 }
