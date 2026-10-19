@@ -1,6 +1,10 @@
 import type { TourConfig, SceneDef, LevelDef, LinkHotspot } from './types'
 
-const asset = (name: string) => `${import.meta.env.BASE_URL}panos/${name}`
+const asset = (name: string) => {
+    const base = import.meta.env.DEV ? '/' : import.meta.env.BASE_URL
+    const cleanBase = base.endsWith('/') ? base : `${base}/`
+    return `${cleanBase}panos/${name}`
+}
 
 const PANO_WIDTH = 5376
 

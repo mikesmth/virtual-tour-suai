@@ -8,7 +8,7 @@ export default defineConfig({
         host: true
     },
     plugins: [react()],
-    base: '/',
+    base: '/virtual-tour-suai',
     build: {
         outDir: 'docs',
     },
