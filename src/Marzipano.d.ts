@@ -1,5 +1,4 @@
-// Минимальные типы для используемой части API Marzipano.
-// Расширяйте по мере необходимости. Официальных типов в npm нет.
+// Типы для используемой части API Marzipano
 declare module 'marzipano' {
     export interface ViewParams {
         yaw: number

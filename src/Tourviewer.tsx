@@ -4,7 +4,7 @@ import { TourEngine } from './tourengine'
 
 interface Props {
     tour: TourConfig
-    /** Текущая сцена (управляется родителем) */
+    // Текущая сцена (управляется родителем)
     sceneId: string
     onSceneChange: (sceneId: string) => void
     onPick?: (coords: PickedCoords) => void

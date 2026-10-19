@@ -2,13 +2,9 @@ import type { TourConfig, SceneDef, LevelDef } from './types'
 
 const asset = (name: string) => `${import.meta.env.BASE_URL}panos/${name}`
 
-/**
- * Ширина панорам в px. Проверьте реальный размер файла (свойства изображения)
- * у Ricoh Theta обычно 5376 или 6720.
- */
 const PANO_WIDTH = 5376
 
-/** Уровни, которые обычно выдаёт Marzipano Tool (куб, 4 уровня). Пригодится для multires. */
+// Уровни, которые обычно выдаёт Marzipano Tool (куб, 4 уровня). Пригодится для multires.
 export const DEFAULT_LEVELS: LevelDef[] = [
     { tileSize: 256, size: 256, fallbackOnly: true },
     { tileSize: 512, size: 512 },
@@ -16,11 +12,6 @@ export const DEFAULT_LEVELS: LevelDef[] = [
     { tileSize: 512, size: 2048 },
 ]
 
-/**
- * Хотспоты ниже — ЗАГЛУШКИ: каждая панорама ведёт на соседние по номеру
- * (вперёд — yaw 0, назад — yaw 180). Реальные yaw/pitch и связи подберите
- * двойным кликом по панораме.
- */
 const scenes: SceneDef[] = [
     {
         id: 'R0011363',

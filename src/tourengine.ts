@@ -9,16 +9,16 @@ const MAX_VFOV = toRad(100)
 
 export interface EngineOptions {
     onSceneChange?: (sceneId: string) => void
-    /** Двойной клик по панораме: координаты точки в градусах (для расстановки хотспотов) */
+    // Двойной клик по панораме: координаты точки в градусах (для расстановки хотспотов)
     onPick?: (coords: PickedCoords) => void
 }
 
 export interface GoToOptions {
-    /** Длительность перехода в мс (0 — мгновенно) */
+    // Длительность перехода в мс (0 — мгновенно)
     transition?: number
 }
 
-/** Ядро тура: не зависит от React, им можно пользоваться и отдельно. */
+// Ядро тура: не зависит от React, им можно пользоваться и отдельно.
 export class TourEngine {
     private container: HTMLElement
     private viewer: Marzipano.Viewer
@@ -76,8 +76,6 @@ export class TourEngine {
         this.scenes.clear()
         this.defs.clear()
     }
-
-    // ---------- внутреннее ----------
 
     private handleDblClick = (e: MouseEvent): void => {
         const view = this.viewer.view()
@@ -155,7 +153,7 @@ export class TourEngine {
     }
 }
 
-/** Чтобы жесты/колесо на хотспоте не вращали панораму */
+// Чтобы жесты/колесо на хотспоте не вращали панораму
 function stopPropagation(el: HTMLElement): void {
     for (const type of ['touchstart', 'touchmove', 'touchend', 'touchcancel', 'wheel', 'mousewheel', 'dblclick']) {
         el.addEventListener(type, (e) => e.stopPropagation())
