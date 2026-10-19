@@ -5,11 +5,13 @@ import { TourViewer } from './Tourviewer'
 
 export default function App() {
     const [sceneId, setSceneId] = useState(tour.startSceneId)
-    const [pick, setPick] = useState<PickedCoords | null>(null)
 
     const handleSceneChange = useCallback((id: string) => {
         setSceneId(id)
-        setPick(null)
+    }, [])
+
+    const handlePick = useCallback((coords: PickedCoords) => {
+        console.log(`yaw: ${coords.yaw}, pitch: ${coords.pitch}`)
     }, [])
 
     const scene = tour.scenes.find((s) => s.id === sceneId)
@@ -29,26 +31,19 @@ export default function App() {
                 ))}
             </nav>
 
-            <main className='main'>
-                <section className='card card--pano'>
-                    <TourViewer
-                        tour={tour}
-                        sceneId={sceneId}
-                        onSceneChange={handleSceneChange}
-                        onPick={setPick}
-                    />
-                </section>
+            <TourViewer
+                tour={tour}
+                sceneId={sceneId}
+                onSceneChange={handleSceneChange}
+                onPick={handlePick}
+            />
 
+            {/* {scene && (
                 <aside className='card card--info'>
-                    <h2 className='card__title'>{scene?.title}</h2>
-                    <p className='card__text'>{scene?.description}</p>
-
-                    <div className='card__label'>Двойной клик</div>
-                    <pre className='code'>
-                        {pick ? `yaw: ${pick.yaw}, pitch: ${pick.pitch}` : '—'}
-                    </pre>
+                    <h2 className='card__title'>{scene.title}</h2>
+                    {scene.description && <p className='card__text'>{scene.description}</p>}
                 </aside>
-            </main>
+            )} */}
         </div>
     )
 }

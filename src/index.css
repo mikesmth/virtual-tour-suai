@@ -3,20 +3,24 @@
     --text-muted: #60646c;
     --gray-3: #e8e8ec;
     --gray-4: #e0e1e6;
-    --card: rgba(255, 255, 255, 0.88);
-    --radius: 12px;
-    --shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.06);
+    --card: rgba(255, 255, 255, 0.82);
+    --radius: 14px;
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.4) inset;
 }
 
-* {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
 }
 
 html,
 body,
 #root {
+    width: 100%;
     height: 100%;
     margin: 0;
+    overflow: hidden;
 }
 
 body {
@@ -30,29 +34,36 @@ button {
     font: inherit;
 }
 
-
-
 .app {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    padding: 16px;
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
 }
 
-.main {
-    flex: 1;
-    min-height: 0;
-    display: grid;
-    grid-template-columns: 1fr 300px;
-    gap: 16px;
-}
-
-
+/* Плавающая панель навигации сверху */
 .nav {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 999px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    max-width: calc(100vw - 40px);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.nav::-webkit-scrollbar {
+    display: none;
 }
 
 .pill {
@@ -62,11 +73,14 @@ button {
     background: transparent;
     color: var(--text-muted);
     cursor: pointer;
+    white-space: nowrap;
+    font-weight: 500;
     transition: background 0.15s, color 0.15s;
 }
 
 .pill:hover {
     color: var(--text);
+    background: rgba(0, 0, 0, 0.04);
 }
 
 .pill--active {
@@ -76,24 +90,26 @@ button {
 
 .pill--active:hover {
     color: #fff;
+    background: var(--text);
 }
 
-
+/* Карточки с информацией (плавающая внизу слева) */
 .card {
     background: var(--card);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    backdrop-filter: blur(6px);
-}
-
-.card--pano {
-    padding: 8px;
-    min-height: 0;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .card--info {
-    padding: 16px;
-    align-self: start;
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    z-index: 20;
+    max-width: calc(100vw - 48px);
+    padding: 18px 20px;
+    pointer-events: auto;
 }
 
 .card__title {
@@ -103,35 +119,17 @@ button {
 }
 
 .card__text {
-    margin: 0 0 16px;
+    margin: 0;
     color: var(--text-muted);
     line-height: 1.45;
 }
 
-.card__label {
-    margin-bottom: 6px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.code {
-    margin: 0;
-    padding: 8px 10px;
-    border-radius: 6px;
-    background: var(--gray-3);
-    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
-    font-size: 12px;
-    user-select: all;
-}
-
-
-
+/* Сцена / вьюер на весь экран */
 .tour {
-    position: relative;
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
-    border-radius: 8px;
-    overflow: hidden;
     background: #0b0d0e;
 }
 
@@ -147,10 +145,13 @@ button {
     place-items: center;
     background: rgba(11, 13, 14, 0.45);
     color: #fff;
+    font-weight: 500;
     pointer-events: none;
+    z-index: 30;
+    backdrop-filter: blur(4px);
 }
 
-
+/* Хотспоты и разные значки для них */
 .hotspot {
     margin: -22px 0 0 -22px;
 }
@@ -163,21 +164,39 @@ button {
     background: rgba(255, 255, 255, 0.92);
     color: var(--text);
     font-size: 18px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
     cursor: pointer;
-    transition: transform 0.15s, background 0.15s;
+    display: grid;
+    place-items: center;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s, box-shadow 0.15s;
 }
 
 .hotspot__btn:hover {
-    transform: scale(1.12);
+    transform: scale(1.15);
     background: #fff;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
 
+/* Кастомизация иконок в зависимости от типа хотспота */
+.hotspot__btn--fwd {
+    font-size: 20px;
+    font-weight: bold;
+}
 
+.hotspot__btn--back {
+    font-size: 20px;
+    font-weight: bold;
+}
 
-@media (max-width: 800px) {
-    .main {
-        grid-template-columns: 1fr;
-        grid-template-rows: 1fr auto;
+.hotspot__btn--restart {
+    font-size: 18px;
+}
+
+@media (max-width: 600px) {
+    .card--info {
+        bottom: 16px;
+        left: 16px;
+        right: 16px;
+        width: auto;
     }
 }

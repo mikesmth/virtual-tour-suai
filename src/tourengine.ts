@@ -32,11 +32,9 @@ interface Pending {
 export class TourEngine {
     private viewer: Marzipano.Viewer
     private defs = new Map<string, SceneDef>()
-    // Кэш промисов: сцена создаётся один раз и только когда она реально нужна
     private scenes = new Map<string, Promise<Marzipano.Scene>>()
 
     private currentId: string | null = null
-    // Сцена, на которую пользователь последний раз запросил переход
     private targetId: string | null = null
     private destroyed = false
     private preloadTimer: number | undefined
@@ -88,7 +86,6 @@ export class TourEngine {
             return
         }
 
-        // Пока грузились, мог прийти новый переход или destroy
         if (this.destroyed || this.targetId !== sceneId) return
         this.setLoading(false)
 
@@ -128,7 +125,6 @@ export class TourEngine {
         if (!promise) {
             promise = this.createScene(def)
             this.scenes.set(def.id, promise)
-            // При ошибке даём возможность повторить попытку позже
             promise.catch(() => this.scenes.delete(def.id))
         }
         return promise
@@ -180,7 +176,6 @@ export class TourEngine {
         }
     }
 
-    // Подгружаем соседние сцены в фоне, чтобы переход был мгновенным
     private schedulePreload(def: SceneDef): void {
         window.clearTimeout(this.preloadTimer)
         this.preloadTimer = window.setTimeout(() => {
@@ -226,7 +221,6 @@ export class TourEngine {
             this.pending.set(id, { resolve, reject })
             this.getWorker().postMessage({
                 id,
-                // В воркере относительные пути резолвятся иначе, поэтому даём абсолютный URL
                 url: new URL(url, document.baseURI).href,
                 width,
                 yaw: toRad(rot.yaw ?? 0),
@@ -260,7 +254,21 @@ export class TourEngine {
         btn.className = 'hotspot__btn'
         btn.title = h.label ?? `Перейти: ${h.target}`
         btn.setAttribute('aria-label', btn.title)
-        btn.textContent = '➤'
+
+        // Назначаем разные иконки и модификаторы в зависимости от варианта хотспота
+        let icon = ''
+        if (h.variant === 'fwd') {
+            icon = '➤'
+            btn.classList.add('hotspot__btn--fwd')
+        } else if (h.variant === 'back') {
+            icon = '↩'
+            btn.classList.add('hotspot__btn--back')
+        } else if (h.variant === 'restart') {
+            icon = '⭯'
+            btn.classList.add('hotspot__btn--restart')
+        }
+
+        btn.textContent = icon
         btn.addEventListener('click', () => void this.goTo(h.target))
 
         wrap.appendChild(btn)

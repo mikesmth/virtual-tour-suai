@@ -10,14 +10,11 @@ export type PanoSource =
     | {
         kind: 'equirect'
         url: string
-        // Ширина исходного изображения в px
         width: number
     }
     | {
         kind: 'multires'
-        // Шаблон тайлов, например /tiles/hall/{z}/{f}/{y}/{x}.jpg
         urlTemplate: string
-        // Превью для мгновенного показа, пока грузятся тайлы
         previewUrl: string
         levels: LevelDef[]
     }
@@ -28,7 +25,6 @@ export interface ViewDef {
     fov: number
 }
 
-// Поворот самой картинки панорамы (без fov)
 export interface Rotation {
     yaw?: number
     pitch?: number
@@ -46,9 +42,9 @@ export interface LinkHotspot {
     pitch: number
     target: string
     label?: string
+    variant?: 'fwd' | 'back' | 'restart' | 'link'
 }
 
-// Задел под следующие шаги: info и sound
 export type HotspotDef = LinkHotspot
 
 export interface SceneDef {
