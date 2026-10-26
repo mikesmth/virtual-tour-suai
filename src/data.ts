@@ -1,10 +1,22 @@
-import type { TourConfig, SceneDef, LevelDef, LinkHotspot } from './types'
+import type {
+    TourConfig,
+    SceneDef,
+    LevelDef,
+    LinkHotspot,
+    HotspotDef,
+    InfoHotspot,
+    SoundHotspot,
+    UrlHotspot,
+} from './types'
 
-const asset = (name: string) => {
+const pub = (path: string) => {
     const base = import.meta.env.DEV ? '/' : import.meta.env.BASE_URL
     const cleanBase = base.endsWith('/') ? base : `${base}/`
-    return `${cleanBase}panos/${name}`
+    return `${cleanBase}${path}`
 }
+
+const asset = (name: string) => pub(`panos/${name}`)
+const soundUrl = (name: string) => pub(`sounds/${name}`)
 
 const PANO_WIDTH = 5376
 
@@ -29,12 +41,65 @@ const fwd = (target: string, yaw = 0, pitch = -10) => link(target, yaw, pitch, '
 const back = (target: string, yaw = 180, pitch = -10) => link(target, yaw, pitch, 'Назад', 'back')
 const restart = (target: string, yaw: number, pitch: number) => link(target, yaw, pitch, 'Начало', 'restart')
 
+// Подсказка: только текст при наведении (по клику закрепляется — для телефонов)
+const info = (yaw: number, pitch: number, label: string, text?: string, tipSide?: 'top' | 'bottom'): InfoHotspot => ({
+    type: 'info',
+    id: `info-${yaw}-${pitch}`,
+    yaw,
+    pitch,
+    label,
+    text,
+    tipSide,
+})
+
+// Звук из public/sounds
+const sound = (
+    file: string,
+    yaw: number,
+    pitch: number,
+    label: string,
+    text?: string,
+    extra: Partial<Pick<SoundHotspot, 'loop' | 'volume' | 'icon' | 'tipSide'>> = {},
+): SoundHotspot => ({
+    type: 'sound',
+    id: `sound-${file}-${yaw}-${pitch}`,
+    yaw,
+    pitch,
+    label,
+    text,
+    src: soundUrl(file),
+    ...extra,
+})
+
+// Кнопка-ссылка: открывает адрес в новой вкладке
+const url = (
+    href: string,
+    yaw: number,
+    pitch: number,
+    label: string,
+    text?: string,
+    extra: Partial<Pick<UrlHotspot, 'icon' | 'newTab' | 'tipSide'>> = {},
+): UrlHotspot => ({
+    type: 'url',
+    id: `url-${yaw}-${pitch}`,
+    yaw,
+    pitch,
+    label,
+    text,
+    href,
+    ...extra,
+})
+
+// Видео по ссылке
+const video = (href: string, yaw: number, pitch: number, label: string, text?: string) =>
+    url(href, yaw, pitch, label, text, { icon: '▶' })
+
 type SceneExtra = Pick<SceneDef, 'description' | 'correction' | 'initialView'>
 
 const scene = (
     id: string,
     title: string,
-    hotspots: LinkHotspot[],
+    hotspots: HotspotDef[],
     extra: SceneExtra = {},
 ): SceneDef => ({
     id,
@@ -51,6 +116,10 @@ const SIDEWAYS: Pick<SceneDef, 'correction'> = {
 const scenes: SceneDef[] = [
     scene('R0011363', '1', [
         fwd('R0011364', -24.7, 70.3),
+
+        info(-62, 12, 'Подсказка', 'Текст виден при наведении; на телефоне — по нажатию'),
+        sound('chime.wav', -100, 12, 'Звук', 'Нажмите, чтобы включить или выключить'),
+        video('https://www.youtube.com/watch?v=rTM8vXtdIUA', -81, 3, 'Видео 360', 'Откроется в новой вкладке'),
     ], {
         correction: { yaw: 100, pitch: 90 },
         initialView: { yaw: -80.9, pitch: 21, fov: 90 },
@@ -66,6 +135,8 @@ const scenes: SceneDef[] = [
     scene('R0011365', '3', [
         fwd('R0011366', 0, -10),
         link('R0011364', -153.8, -7.9, 'Назад', 'back'),
+
+        info(35.7, 2.3, 'Куда ведет выход?', 'На парковку'),
     ], {
         initialView: { yaw: 16.7, pitch: 4.5 },
     }),
@@ -92,6 +163,8 @@ const scenes: SceneDef[] = [
     scene('R0011369', '7', [
         fwd('R0011370', 98.6, 0.1),
         back('R0011368', 0, -10),
+
+        info(-175.3, 8.6, 'ГУАП', 'Санкт-Петербургский государственный университет аэрокосмического приборостроения (ГУАП) — это ведущий российский вуз в области авиационно-космических комплексов, систем управления и информационных технологий.', 'bottom'),
     ], {
         initialView: { yaw: -175.2, pitch: 2 },
     }),

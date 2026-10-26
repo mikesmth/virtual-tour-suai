@@ -1,5 +1,14 @@
 import * as Marzipano from 'marzipano'
-import type { SceneDef, TourConfig, LinkHotspot, ViewDef, PickedCoords, Rotation } from './types'
+import type {
+    SceneDef,
+    TourConfig,
+    HotspotDef,
+    SoundHotspot,
+    ViewDef,
+    PickedCoords,
+    Rotation,
+} from './types'
+import { AudioPlayer } from './audio'
 
 const toRad = (deg: number) => (deg * Math.PI) / 180
 const toDeg = (rad: number) => (rad * 180) / Math.PI
@@ -44,6 +53,12 @@ export class TourEngine {
     private nextRequestId = 0
     private objectUrls: string[] = []
 
+    // звук и подсказки хотспотов
+    private audio = new AudioPlayer()
+    private cleanups: Array<() => void> = []
+    private openTip: HTMLElement | null = null
+    private tipCounter = 0
+
     constructor(
         private container: HTMLElement,
         tour: TourConfig,
@@ -56,6 +71,8 @@ export class TourEngine {
         })
 
         container.addEventListener('dblclick', this.handleDblClick)
+        // capture: срабатывает раньше, чем хотспоты остановят событие
+        container.addEventListener('pointerdown', this.handlePointerDown, true)
     }
 
     get currentSceneId(): string | null {
@@ -96,6 +113,10 @@ export class TourEngine {
             fov: toRad(v.fov),
         })
 
+        // при смене панорамы звук предыдущей выключаем, подсказки закрываем
+        this.audio.stop()
+        this.closeTip()
+
         scene.switchTo({ transitionDuration: transition })
         this.currentId = sceneId
         this.opts.onSceneChange?.(sceneId)
@@ -106,6 +127,11 @@ export class TourEngine {
         this.destroyed = true
         window.clearTimeout(this.preloadTimer)
         this.container.removeEventListener('dblclick', this.handleDblClick)
+        this.container.removeEventListener('pointerdown', this.handlePointerDown, true)
+
+        for (const cleanup of this.cleanups) cleanup()
+        this.cleanups = []
+        this.audio.destroy()
 
         this.worker?.terminate()
         this.worker = null
@@ -139,9 +165,7 @@ export class TourEngine {
 
         const scene = this.viewer.createScene({ source, geometry, view, pinFirstLevel: true })
 
-        for (const h of def.hotspots) {
-            if (h.type === 'link') this.addLinkHotspot(scene, h)
-        }
+        for (const h of def.hotspots) this.addHotspot(scene, h)
         return scene
     }
 
@@ -180,6 +204,7 @@ export class TourEngine {
         window.clearTimeout(this.preloadTimer)
         this.preloadTimer = window.setTimeout(() => {
             for (const h of def.hotspots) {
+                if (h.type !== 'link') continue
                 const next = this.defs.get(h.target)
                 if (next) this.getScene(next).catch(() => { })
             }
@@ -245,33 +270,30 @@ export class TourEngine {
         })
     }
 
-    private addLinkHotspot(scene: Marzipano.Scene, h: LinkHotspot): void {
-        const wrap = document.createElement('div')
-        wrap.className = 'hotspot'
+    // хотспоты
 
-        const btn = document.createElement('button')
-        btn.type = 'button'
-        btn.className = 'hotspot__btn'
-        btn.title = h.label ?? `Перейти: ${h.target}`
-        btn.setAttribute('aria-label', btn.title)
+    private addHotspot(scene: Marzipano.Scene, h: HotspotDef): void {
+        const { wrap, inner, btn } = this.buildHotspotElement(h)
 
-        // Назначаем разные иконки и модификаторы в зависимости от варианта хотспота
-        let icon = ''
-        if (h.variant === 'fwd') {
-            icon = '➤'
-            btn.classList.add('hotspot__btn--fwd')
-        } else if (h.variant === 'back') {
-            icon = '↩'
-            btn.classList.add('hotspot__btn--back')
-        } else if (h.variant === 'restart') {
-            icon = '⭯'
-            btn.classList.add('hotspot__btn--restart')
+        switch (h.type) {
+            case 'link': {
+                const { target } = h
+                btn.addEventListener('click', () => void this.goTo(target))
+                break
+            }
+            case 'sound':
+                this.bindSound(btn, h)
+                break
+            case 'url': {
+                const { href, newTab = true } = h
+                btn.addEventListener('click', () => openUrl(href, newTab))
+                break
+            }
+            case 'info':
+                btn.addEventListener('click', () => this.toggleTip(inner))
+                break
         }
 
-        btn.textContent = icon
-        btn.addEventListener('click', () => void this.goTo(h.target))
-
-        wrap.appendChild(btn)
         stopPropagation(wrap)
 
         scene.hotspotContainer().createHotspot(wrap, {
@@ -279,6 +301,116 @@ export class TourEngine {
             pitch: toRad(h.pitch),
         })
     }
+
+    private buildHotspotElement(h: HotspotDef) {
+        const wrap = document.createElement('div')
+        wrap.className = 'hotspot'
+
+        const inner = document.createElement('div')
+        inner.className = 'hotspot__inner'
+
+        const btn = document.createElement('button')
+        btn.type = 'button'
+        btn.className = `hotspot__btn hotspot__btn--${h.type}`
+        if (h.type === 'link' && h.variant) btn.classList.add(`hotspot__btn--${h.variant}`)
+        btn.textContent = h.icon ?? defaultIcon(h)
+
+        const ariaLabel = h.label ?? (h.type === 'link' ? `Перейти: ${h.target}` : undefined)
+        if (ariaLabel) btn.setAttribute('aria-label', ariaLabel)
+
+        inner.appendChild(btn)
+
+        if (h.label || h.text) {
+            const tip = document.createElement('div')
+            tip.className = `hotspot__tip hotspot__tip--${h.tipSide ?? 'top'}`
+            tip.id = `tour-tip-${this.tipCounter++}`
+            tip.setAttribute('role', 'tooltip')
+
+            if (h.label) {
+                const title = document.createElement('div')
+                title.className = 'hotspot__tip-title'
+                title.textContent = h.label
+                tip.appendChild(title)
+            }
+            if (h.text) {
+                const text = document.createElement('div')
+                text.className = 'hotspot__tip-text'
+                text.textContent = h.text
+                tip.appendChild(text)
+            }
+
+            btn.setAttribute('aria-describedby', tip.id)
+            inner.appendChild(tip)
+        }
+
+        wrap.appendChild(inner)
+        return { wrap, inner, btn }
+    }
+
+    private bindSound(btn: HTMLButtonElement, h: SoundHotspot): void {
+        const idleIcon = h.icon ?? defaultIcon(h)
+
+        const sync = () => {
+            const playing = this.audio.isPlaying(h.src)
+            btn.classList.toggle('hotspot__btn--playing', playing)
+            btn.setAttribute('aria-pressed', String(playing))
+            btn.textContent = playing ? '■' : idleIcon
+        }
+
+        this.cleanups.push(this.audio.onChange(sync))
+        btn.addEventListener('click', () => this.audio.toggle(h.src, { loop: h.loop, volume: h.volume }))
+        sync()
+    }
+
+    private toggleTip(inner: HTMLElement): void {
+        const wasOpen = this.openTip === inner
+        this.closeTip()
+        if (!wasOpen) {
+            inner.classList.add('hotspot__inner--open')
+            this.openTip = inner
+        }
+    }
+
+    private closeTip(): void {
+        this.openTip?.classList.remove('hotspot__inner--open')
+        this.openTip = null
+    }
+
+    private handlePointerDown = (e: PointerEvent): void => {
+        if (this.openTip && !this.openTip.contains(e.target as Node)) this.closeTip()
+    }
+}
+
+function defaultIcon(h: HotspotDef): string {
+    switch (h.type) {
+        case 'link':
+            if (h.variant === 'back') return '↩'
+            if (h.variant === 'restart') return '⭯'
+            return '➤'
+        case 'sound':
+            return '♪'
+        case 'url':
+            return '↗'
+        case 'info':
+            return 'i'
+    }
+}
+
+// Открывает только http(s)-ссылки
+function openUrl(href: string, newTab: boolean): void {
+    let url: URL
+    try {
+        url = new URL(href, document.baseURI)
+    } catch {
+        console.warn(`[TourEngine] Некорректная ссылка: ${href}`)
+        return
+    }
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+        console.warn(`[TourEngine] Разрешены только http(s)-ссылки: ${href}`)
+        return
+    }
+    if (newTab) window.open(url.href, '_blank', 'noopener,noreferrer')
+    else window.location.assign(url.href)
 }
 
 function stopPropagation(el: HTMLElement): void {

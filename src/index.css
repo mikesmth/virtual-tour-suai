@@ -200,3 +200,107 @@ button {
         width: auto;
     }
 }
+
+/* Подсказки и функциональные кнопки */
+
+.hotspot__inner {
+    position: relative;
+    width: 44px;
+    height: 44px;
+}
+
+.hotspot:hover {
+    z-index: 10;
+}
+
+.hotspot__btn:focus-visible {
+    outline: 2px solid var(--text);
+    outline-offset: 3px;
+}
+
+.hotspot__tip {
+    position: absolute;
+    left: 50%;
+    width: max-content;
+    max-width: 240px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: rgba(28, 32, 36, 0.92);
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.35;
+    text-align: left;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate(-50%, 4px);
+    transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
+}
+
+.hotspot__tip--top {
+    bottom: calc(100% + 10px);
+}
+
+.hotspot__tip--bottom {
+    top: calc(100% + 10px);
+    transform: translate(-50%, -4px);
+}
+
+.hotspot__inner:hover .hotspot__tip,
+.hotspot__btn:focus-visible~.hotspot__tip,
+.hotspot__inner--open .hotspot__tip {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+}
+
+.hotspot__tip-title {
+    font-weight: 600;
+}
+
+.hotspot__tip-text {
+    margin-top: 2px;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* Значки разных типов */
+.hotspot__btn--sound,
+.hotspot__btn--url {
+    font-size: 20px;
+}
+
+.hotspot__btn--info {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 21px;
+}
+
+/* Звук играет: тёмная кнопка с пульсацией */
+.hotspot__btn--playing,
+.hotspot__btn--playing:hover {
+    background: var(--text);
+    color: #fff;
+    animation: hotspot-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes hotspot-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), 0 0 0 0 rgba(28, 32, 36, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), 0 0 0 10px rgba(28, 32, 36, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .hotspot__btn--playing,
+    .hotspot__btn--playing:hover {
+        animation: none;
+    }
+}
